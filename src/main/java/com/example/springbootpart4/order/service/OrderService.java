@@ -5,8 +5,14 @@ import com.example.springbootpart4.domain.order.OrderRepository;
 import com.example.springbootpart4.order.converter.OrderConverter;
 import com.example.springbootpart4.order.dto.OrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import javassist.NotFoundException;
+
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -29,11 +35,18 @@ public class OrderService {
         return entity.getUuid();
     }
 
-    public void findAll() {
-
+    @Transactional
+    public Page<OrderDto> findAll(Pageable pageable) {
+        return orderRepository.findAll(pageable)
+                .map(orderConverter::convertOrderDto);
     }
 
-    public void findOne() {
-
+    @Transactional
+    public OrderDto findOne(String uuid) throws NotFoundException {
+        // 1. 조회를 위한 키 값 받기
+        // 2. orderRepository.findById(uuid) -> 조회 (영속화된 엔티티)
+        return orderRepository.findById(uuid)
+                .map(orderConverter::convertOrderDto)  // 3. entity -> dto
+                .orElseThrow(() -> new NotFoundException("주문을 찾을 수 없습니다."));
     }
 }
